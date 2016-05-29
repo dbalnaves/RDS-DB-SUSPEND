@@ -35,7 +35,7 @@ Bucket Policy:
 			],
 			"Condition": {
 				"StringNotLike": {
-					"aws:userid": "AROAIODZPQ5BUAGC34HJK:*"
+					"aws:userid": "ROLE_ID_HERE:*"
 				}
 			}
 		},
