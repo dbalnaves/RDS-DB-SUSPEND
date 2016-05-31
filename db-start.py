@@ -3,14 +3,14 @@
 import json, sys
 import subprocess,os
 import jmespath
-import urllib2
+import requests
 
 bucket="data-db-suspend"
 snapshot_suffix="-nightly"
 role="DATA-DB-SUSPEND"
 
 bucket_path="s3://"+bucket+"/"
-response=urllib2.urlopen("http://169.254.169.254/latest/dynamic/instance-identity/document").read()
+response=requests.get("http://169.254.169.254/latest/dynamic/instance-identity/document")
 document=json.loads(response)
 role_arn="arn:aws:iam::"+document["accountId"]+":role/"+role
 
@@ -69,6 +69,6 @@ for db_state in db_state_list:
     except subprocess.CalledProcessError as error:
         print "ERROR: Failed to delete db state from \""+db_meta_path+"\":", error.output
         sys.exit(1)
-    
+
     print "INFO: Restore db instane \""+"DBInstanceIdentifier"+"\" complete."
     sys.exit(0)

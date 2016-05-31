@@ -3,7 +3,7 @@
 import json, sys
 import subprocess,os
 import jmespath
-import urllib2
+import requests
 
 databases=["data-test"]
 bucket="data-db-suspend"
@@ -12,7 +12,7 @@ role="DATA-DB-SUSPEND"
 
 bucket_path="s3://"+bucket+"/"
 
-response=urllib2.urlopen("http://169.254.169.254/latest/dynamic/instance-identity/document").read()
+response=requests.get("http://169.254.169.254/latest/dynamic/instance-identity/document")
 document=json.loads(response)
 role_arn="arn:aws:iam::"+document["accountId"]+":role/"+role
 
