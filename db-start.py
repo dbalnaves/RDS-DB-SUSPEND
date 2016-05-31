@@ -5,7 +5,6 @@ import subprocess,os
 import jmespath
 import urllib2
 
-databases=["data-test"]
 bucket="data-db-suspend"
 snapshot_suffix="-nightly"
 role="DATA-DB-SUSPEND"
