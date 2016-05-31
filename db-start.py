@@ -3,15 +3,19 @@
 import json, sys
 import subprocess,os
 import jmespath
+import urllib2
 
 databases=["data-test"]
 bucket="data-db-suspend"
 snapshot_suffix="-nightly"
-role="arn:aws:iam::696969696969:role/DATA-DB-SUSPEND"
+role="DATA-DB-SUSPEND"
 
 bucket_path="s3://"+bucket+"/"
+response=urllib2.urlopen("http://169.254.169.254/latest/dynamic/instance-identity/document").read()
+document=json.loads(response)
+role_arn="arn:aws:iam::"+document["accountId"]+":role/"+role
 
-response=subprocess.check_output(["/usr/bin/aws","sts","assume-role","--role-arn",role,"--role-session-name","DATA-DB-SUSPEND"])
+response=subprocess.check_output(["/usr/bin/aws","sts","assume-role","--role-arn",role_arn,"--role-session-name","DATA-DB-SUSPEND"])
 
 credentials=jmespath.search("Credentials.[AccessKeyId,SecretAccessKey,SessionToken]",json.loads(response))
 credentials_env=os.environ
@@ -46,14 +50,14 @@ for db_state in db_state_list:
         sys.exit(1) 
 
     try:
-        process=subprocess.Popen(["/usr/bin/aws","rds","wait","db-instance-available","--db-instance-identifier",db_meta["DBInstanceIdentifier"]],env=credentials_env)
+        process=subprocess.Popen(["/usr/bin/aws","rds","wait","db-instance-available","--db-instance-identifier",db_meta["DBInstanceIdentifier"]], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=credentials_env)
         response,error=process.communicate()
     except subprocess.CalledProcessError as error:
         print "ERROR: Failed to enter wait while creating db instance \""+db_meta["DBInstanceIdentifier"]+"\":", error.output
         sys.exit(1)
 
     try:
-        process=subprocess.Popen(["/usr/bin/aws","rds","delete-db-snapshot","--db-snapshot-identifier",db_state],env=credentials_env)
+        process=subprocess.Popen(["/usr/bin/aws","rds","delete-db-snapshot","--db-snapshot-identifier",db_state], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=credentials_env)
         response,error=process.communicate()
     except subprocess.CalledProcessError as error:
         print "ERROR: Failed to db state snapshot \""+db_state+"\":", error.output
@@ -67,5 +71,5 @@ for db_state in db_state_list:
         print "ERROR: Failed to delete db state from \""+db_meta_path+"\":", error.output
         sys.exit(1)
     
-print "INFO: Restore db instane \""+"DBInstanceIdentifier"+"\" complete."
-sys.exit(0)
+    print "INFO: Restore db instane \""+"DBInstanceIdentifier"+"\" complete."
+    sys.exit(0)

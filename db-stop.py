@@ -3,15 +3,20 @@
 import json, sys
 import subprocess,os
 import jmespath
+import urllib2
 
 databases=["data-test"]
 bucket="data-db-suspend"
 snapshot_suffix="-nightly"
-role="arn:aws:iam::696969696969:role/DATA-DB-SUSPEND"
+role="DATA-DB-SUSPEND"
 
 bucket_path="s3://"+bucket+"/"
 
-response=subprocess.check_output(["/usr/bin/aws","sts","assume-role","--role-arn",role,"--role-session-name","DATA-DB-SUSPEND"])
+response=urllib2.urlopen("http://169.254.169.254/latest/dynamic/instance-identity/document").read()
+document=json.loads(response)
+role_arn="arn:aws:iam::"+document["accountId"]+":role/"+role
+
+response=subprocess.check_output(["/usr/bin/aws","sts","assume-role","--role-arn",role_arn,"--role-session-name","DATA-DB-SUSPEND"])
 
 credentials=jmespath.search("Credentials.[AccessKeyId,SecretAccessKey,SessionToken]",json.loads(response))
 credentials_env=os.environ
